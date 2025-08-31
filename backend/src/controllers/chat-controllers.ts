@@ -1,13 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import User from "../models/User.js";
-import Groq from "groq-sdk";
-import type { ChatCompletionMessageParam } from "groq-sdk/resources/chat/completions";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
+
 dotenv.config();
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const generateChatCompletion = async (
   req: Request,
@@ -19,40 +18,39 @@ export const generateChatCompletion = async (
   try {
     const user = await User.findById(res.locals.jwtData.id);
     if (!user) {
-      return res.status(401).json({ message: "User not registered or token malfunctioned." });
+      return res
+        .status(401)
+        .json({ message: "User not registered or token malfunctioned." });
     }
 
-    const chats: ChatCompletionMessageParam[] = user.chats.map(({ role, content }) => ({
-      role: role as "system" | "user" | "assistant",
-      content,
+    // Convert stored chats into Gemini history format
+    const history = user.chats.map(({ role, content }: { role: string; content: string }) => ({
+      role: role === "assistant" ? "model" : role, // Gemini uses "user" and "model"
+      parts: [{ text: content }],
     }));
 
-    chats.push({ role: "user", content: message });
+    // Add latest user message
+    history.push({ role: "user", parts: [{ text: message }] });
     user.chats.push({ role: "user", content: message });
 
-    const chatResponse = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
-      messages: chats,
-    });
+    // Start chat session with history
+    const chat = model.startChat({ history });
+    const result = await chat.sendMessage(message);
 
-    const reply = chatResponse.choices[0]?.message;
+    const reply = result.response.text();
     if (!reply) {
       return res.status(500).json({ message: "No response from model" });
     }
 
-    user.chats.push({
-      role: reply.role as "assistant",
-      content: reply.content || "",
-    });
+    user.chats.push({ role: "assistant", content: reply });
     await user.save();
 
     return res.status(200).json({ chats: user.chats });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    return res.status(500).json({ message: "Something went wrong" });
+    return res.status(500).json({ message: "Something went wrong", cause: error.message });
   }
 };
-
 
 export const sendChatsToUser = async (
   req: Request,
@@ -72,7 +70,7 @@ export const sendChatsToUser = async (
     }
 
     return res.status(200).json({ message: "OK", chats: user.chats });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return res.status(500).json({ message: "ERROR", cause: error.message });
   }
@@ -101,7 +99,7 @@ export const deleteChats = async (
     await user.save();
 
     return res.status(200).json({ message: "OK" });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return res.status(500).json({ message: "ERROR", cause: error.message });
   }
