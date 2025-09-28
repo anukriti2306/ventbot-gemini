@@ -5,11 +5,11 @@ const TyperAnimation = () => {
     <TypeAnimation
       sequence={[
         // Same substring at the start will only be typed out once, initially
-        'This is a safe space to talk',
+        'Currently, Gemini 1.5 models have been retired.',
         2000, // wait 1s before replacing "Mice" with "Hamsters"
-        'Only listening, no judgment',
+        ' Gemini 2.5 Flash is the upgraded version of Gemini 1.5 Flash but requires paid access.',
         2000,
-        'Prioritize your mental health',
+        'Currently the chat functionality is not available. It will be up once a free-tier alternative is found.',
         1500,
       ]}
       wrapper="span"
