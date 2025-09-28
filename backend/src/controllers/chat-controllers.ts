@@ -1,13 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import User from "../models/User.js";
-import Groq from "groq-sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const generateChatCompletion = async (
   req: Request,
@@ -24,36 +23,32 @@ export const generateChatCompletion = async (
         .json({ message: "User not registered or token malfunctioned." });
     }
 
-    // Map chats to Groq-compatible type
-    const formattedChats = user.chats.map(({ role, content }) => ({
-      role: role as "user" | "assistant" | "system",
-      content,
+    // Convert stored chats into Gemini history format
+    const history = user.chats.map(({ role, content }: { role: string; content: string }) => ({
+      role: role === "assistant" ? "model" : role, // Gemini uses "user" and "model"
+      parts: [{ text: content }],
     }));
 
-    // Add the latest user message
-    formattedChats.push({ role: "user", content: message });
+    // Add latest user message
+    history.push({ role: "user", parts: [{ text: message }] });
     user.chats.push({ role: "user", content: message });
 
-    // Create chat completion
-    const chatResponse = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      messages: formattedChats,
-    });
+    // Start chat session with history
+    const chat = model.startChat({ history });
+    const result = await chat.sendMessage(message);
 
-    const reply = chatResponse.choices[0]?.message;
+    const reply = result.response.text();
     if (!reply) {
       return res.status(500).json({ message: "No response from model" });
     }
 
-    user.chats.push({ role: reply.role, content: reply.content || "" });
+    user.chats.push({ role: "assistant", content: reply });
     await user.save();
 
     return res.status(200).json({ chats: user.chats });
   } catch (error: any) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ message: "Something went wrong", cause: error.message });
+    return res.status(500).json({ message: "Something went wrong", cause: error.message });
   }
 };
 
