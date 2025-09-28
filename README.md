@@ -12,7 +12,7 @@
 VentBot is an AI-powered chatbot platform for real-time conversations.  
 It lets users chat with AI, view conversation history, and manage their sessions seamlessly.
 
-- 🧠 AI-powered chats using **Groq SDK**
+- 🧠 AI-powered chats using **gemini pro**
 - 🔐 Secure authentication with **JWT & HttpOnly cookies**
 - 💻 Full chat history and clear conversation functionality
 - ⚡ Responsive and modern UI using **React + MUI**
@@ -25,7 +25,7 @@ It lets users chat with AI, view conversation history, and manage their sessions
 - **Frontend:** React, Vite, MUI, TypeScript  
 - **Deployment:** Render (backend), Vercel (frontend)  
 - **Authentication:** JWT with cookies  
-- **AI Integration:** Groq SDK
+- **AI Integration:** gemini-pro
 
 ---
 
@@ -41,7 +41,7 @@ It lets users chat with AI, view conversation history, and manage their sessions
 
 ## 🔗 TRY IT ONLINE
 
-<a href="https://ventbot-saas-ai.vercel.app" target="_blank">
+<a href="https://ventbot-gemini.vercel.app" target="_blank">
   <img src="https://img.shields.io/badge/🚀%20GO%20TO%20FRONTEND-ORANGE?style=for-the-badge&logo=vercel&logoColor=white&color=ff6600&labelColor=ff9900" alt="Go to Frontend">
 </a>
 
@@ -65,7 +65,7 @@ Create a .env file with:
 PORT=5000
 MONGO_URI=<your-mongo-uri>
 COOKIE_SECRET=<your-cookie-secret>
-GROQ_API_KEY=<your-groq-api-key>
+GEMINI_API_KEY=<your-gemini-pro-api-key>
 FRONTEND_URL=https://ventbot-saas-ai.vercel.app
 
 ```
