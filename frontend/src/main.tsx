@@ -9,7 +9,7 @@ import axios from "axios";
 import { Toaster } from 'react-hot-toast';
 
 // Production API base URL
-axios.defaults.baseURL = "https://ventbot-saas-ai.onrender.com/api/v1";
+axios.defaults.baseURL = "https://ventbot-gemini.onrender.com/api/v1";
 axios.defaults.withCredentials = true;
 
 const theme = createTheme({
